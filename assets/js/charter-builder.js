@@ -1,9 +1,11 @@
 jQuery(document).ready(function ($) {
   /* --------------------
-     BASE CONFIG
+     BASE CONFIG WITH CUSTOMIZATION SUPPORT
 -------------------- */
-  let maxStops = 3;
-  let basePrice = 900;
+  let maxStops = window.qiogConfig?.maxStops || 3;
+  let basePrice = window.qiogConfig?.basePriceFor3 || 900;
+  let basePriceFor3Stops = window.qiogConfig?.basePriceFor3 || 900;
+  let basePriceFor4Stops = window.qiogConfig?.basePriceFor4 || 1100;
   let addonTotal = 0;
   let upgraded = false;
 
@@ -11,7 +13,7 @@ jQuery(document).ready(function ($) {
      RENDER FUNCTIONS
 -------------------- */
   function renderStops(stops) {
-    $(".available-stops").empty(); // Clear first
+    $(".available-stops").empty();
     stops.forEach((stop) => {
       $(".available-stops").append(`
             <div class="qiog-item stop-item" data-id="${stop.id}">
@@ -22,7 +24,7 @@ jQuery(document).ready(function ($) {
   }
 
   function renderAddons(addons) {
-    $(".available-addons").empty(); // Clear first
+    $(".available-addons").empty();
     addons.forEach((addon) => {
       $(".available-addons").append(`
             <div class="qiog-item addon-item" 
@@ -50,29 +52,27 @@ jQuery(document).ready(function ($) {
      FETCH DATA VIA AJAX
 -------------------- */
   function fetchStopsAndAddons() {
-    // Fetch stops
     $.post(qiogCharter.ajax_url, { action: "qiog_get_stops" }, function (res) {
       if (res.success) renderStops(res.data);
     });
 
-    // Fetch addons
     $.post(qiogCharter.ajax_url, { action: "qiog_get_addons" }, function (res) {
       if (res.success) renderAddons(res.data);
     });
   }
 
-  // Initialize
   fetchStopsAndAddons();
 
+  /* --------------------
+     EMPTY STATE MANAGEMENT
+-------------------- */
   function updateEmptyStates() {
-    // Update Selected Stops empty state
     if ($(".selected-stops .stop-item").length > 0) {
       $(".selected-stops .qiog-empty-state").hide();
     } else {
       $(".selected-stops .qiog-empty-state").show();
     }
 
-    // Update Selected Addons empty state
     if ($(".selected-addons .addon-item").length > 0) {
       $(".selected-addons .qiog-empty-state").hide();
     } else {
@@ -81,17 +81,16 @@ jQuery(document).ready(function ($) {
   }
 
   /* --------------------
-       UPDATE SUMMARY
-    -------------------- */
-
+     UPDATE SUMMARY
+-------------------- */
   function updateSummary() {
     let selectedStops = $(".selected-stops .stop-item").length;
 
-    // Pricing depends on ACTUAL stops selected
+    // Dynamic pricing based on stops
     if (selectedStops === 4) {
-      basePrice = 1100;
+      basePrice = basePriceFor4Stops;
     } else {
-      basePrice = 900;
+      basePrice = basePriceFor3Stops;
     }
 
     $("#qiog-stop-count").text(selectedStops);
@@ -100,19 +99,18 @@ jQuery(document).ready(function ($) {
     $("#qiog-grand-total").text(basePrice + addonTotal);
 
     // Upgrade CTA logic
-    if (selectedStops === 3 && !upgraded) {
+    if (selectedStops === maxStops && !upgraded && maxStops < 4) {
       $("#qiog-upgrade-wrapper").show();
     } else {
       $("#qiog-upgrade-wrapper").hide();
     }
-    // Update empty states
+
     updateEmptyStates();
   }
 
   /* --------------------
-         CALCULATE ADDON TOTAL
-    -------------------- */
-
+     CALCULATE ADDON TOTAL
+-------------------- */
   function calculateAddonTotal() {
     addonTotal = 0;
 
@@ -124,14 +122,11 @@ jQuery(document).ready(function ($) {
     });
 
     updateSummary();
-    // Update empty states
-    updateEmptyStates();
   }
 
   /* --------------------
    DRAG & DROP - STOPS
 -------------------- */
-
   $(".available-stops, .selected-stops")
     .sortable({
       connectWith: ".qiog-stops",
@@ -158,10 +153,9 @@ jQuery(document).ready(function ($) {
   /* --------------------
    UPGRADE STOPS
 -------------------- */
-
   $("#qiog-upgrade-btn").on("click", function () {
     let confirmUpgrade = confirm(
-      "Upgrade to 4 stops? You’ll only be charged when you add the extra stop."
+      "Upgrade to 4 stops? Base price will increase to $" + basePriceFor4Stops + " when you add the 4th stop."
     );
 
     if (!confirmUpgrade) return;
@@ -175,7 +169,6 @@ jQuery(document).ready(function ($) {
   /* --------------------
    DRAG & DROP - ADDONS
 -------------------- */
-
   $(".available-addons, .selected-addons")
     .sortable({
       connectWith: ".qiog-addons",
@@ -192,7 +185,6 @@ jQuery(document).ready(function ($) {
   /* --------------------
    ADDON QUANTITY LOGIC
 -------------------- */
-
   $(document).on("click", ".qty-plus", function () {
     let addon = $(this).closest(".addon-item");
     let qty = parseInt(addon.attr("data-qty"));
@@ -220,7 +212,6 @@ jQuery(document).ready(function ($) {
   /* --------------------
    CHECKOUT LOGIC
 -------------------- */
-
   $("#qiog-checkout-btn").on("click", function () {
     let stops = [];
     $(".selected-stops .stop-item").each(function () {
@@ -245,12 +236,12 @@ jQuery(document).ready(function ($) {
       grand_total: basePrice + addonTotal,
     };
 
-    // Store in sessionStorage for checkout page
     sessionStorage.setItem("qiog_booking", JSON.stringify(bookingData));
-
-    // Redirect to checkout
     window.location.href = qiogCharter.checkout_url;
   });
+
+  // Initialize empty states on load
+  updateEmptyStates();
 
   /* --------------------
       LOAD BOOKING ON CHECKOUT PAGE

@@ -36,6 +36,8 @@ require_once QIOG_CHARTER_PATH . 'includes/shortcode-checkout.php';
 require_once QIOG_CHARTER_PATH . 'includes/ajax-checkout.php';
 // Load admin dashboard
 require_once QIOG_CHARTER_PATH . 'admin/dashboard.php';
+// Load customization settings page
+require_once QIOG_CHARTER_PATH . 'admin/customization.php';
 
 
 

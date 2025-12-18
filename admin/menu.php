@@ -46,6 +46,16 @@ function qiog_charter_admin_menu()
         'qiog_charter_addons',
         'qiog_charter_addons_page'
     );
+
+    // Submenu: Customization
+    add_submenu_page(
+        'qiog_charter',
+        'Charter Customization',
+        'Charter Customization',
+        'manage_options',
+        'qiog_charter_customization',
+        'qiog_charter_customization_page',
+    );
 }
 
 

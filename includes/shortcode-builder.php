@@ -7,24 +7,47 @@ add_shortcode('qiog_build_charter', 'qiog_render_charter_builder');
 
 function qiog_render_charter_builder()
 {
+    // Get customization options
+    $options = get_option('qiog_customization_options', array());
+    $primary_color = isset($options['primary_color']) ? $options['primary_color'] : '#4CAF50';
+    $secondary_color = isset($options['secondary_color']) ? $options['secondary_color'] : '#2196F3';
+    $charter_heading = isset($options['charter_heading']) ? $options['charter_heading'] : 'Build Your Charter';
+    $stops_label = isset($options['stops_label']) ? $options['stops_label'] : 'Available Stops';
+    $addons_label = isset($options['addons_label']) ? $options['addons_label'] : 'Available Add-ons';
+    $base_price_3 = isset($options['base_price_3_stops']) ? $options['base_price_3_stops'] : 900;
+    $base_price_4 = isset($options['base_price_4_stops']) ? $options['base_price_4_stops'] : 1100;
+    $max_stops = isset($options['max_stops']) ? $options['max_stops'] : 3;
+
     ob_start();
     ?>
-    <div id="qiog-charter-builder">
+    <style>
+        #qiog-charter-builder {
+            --primary-color:
+                <?php echo esc_attr($primary_color); ?>
+            ;
+            --secondary-color:
+                <?php echo esc_attr($secondary_color); ?>
+            ;
+        }
+    </style>
 
-        <h2>Build Your Charter</h2>
+    <div id="qiog-charter-builder" data-base-price-3="<?php echo esc_attr($base_price_3); ?>"
+        data-base-price-4="<?php echo esc_attr($base_price_4); ?>" data-max-stops="<?php echo esc_attr($max_stops); ?>">
+
+        <h2><?php echo esc_html($charter_heading); ?></h2>
 
         <div class="qiog-builder-layout">
             <!-- Left Column: Available Items -->
             <div class="qiog-column qiog-available-column">
                 <!-- Available Stops -->
                 <div class="qiog-section">
-                    <h3>Available Stops</h3>
+                    <h3><?php echo esc_html($stops_label); ?></h3>
                     <div class="qiog-stops available-stops"></div>
                 </div>
 
                 <!-- Available Addons -->
                 <div class="qiog-section">
-                    <h3>Available Add-ons</h3>
+                    <h3><?php echo esc_html($addons_label); ?></h3>
                     <div class="qiog-addons available-addons"></div>
                 </div>
             </div>
@@ -63,7 +86,7 @@ function qiog_render_charter_builder()
                     </div>
                     <div class="qiog-summary-row">
                         <span>Base Price:</span>
-                        <span>$<span id="qiog-base-price">900</span></span>
+                        <span>$<span id="qiog-base-price"><?php echo esc_html($base_price_3); ?></span></span>
                     </div>
                     <div class="qiog-summary-row">
                         <span>Add-ons Total:</span>
@@ -72,7 +95,7 @@ function qiog_render_charter_builder()
                     <hr>
                     <div class="qiog-summary-row qiog-total-row">
                         <strong>Total:</strong>
-                        <strong>$<span id="qiog-grand-total">900</span></strong>
+                        <strong>$<span id="qiog-grand-total"><?php echo esc_html($base_price_3); ?></span></strong>
                     </div>
                 </div>
 
@@ -83,6 +106,24 @@ function qiog_render_charter_builder()
         </div>
 
     </div>
+
+    <script>
+        jQuery(document).ready(function ($) {
+            // Get customization values from data attributes
+            var builderEl = $('#qiog-charter-builder');
+            var basePriceFor3 = parseInt(builderEl.data('base-price-3')) || 900;
+            var basePriceFor4 = parseInt(builderEl.data('base-price-4')) || 1100;
+            var maxStopsConfig = parseInt(builderEl.data('max-stops')) || 3;
+
+            // Update global variables in your main script
+            if (typeof window.qiogConfig === 'undefined') {
+                window.qiogConfig = {};
+            }
+            window.qiogConfig.basePriceFor3 = basePriceFor3;
+            window.qiogConfig.basePriceFor4 = basePriceFor4;
+            window.qiogConfig.maxStops = maxStopsConfig;
+        });
+    </script>
     <?php
     return ob_get_clean();
 }
