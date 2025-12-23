@@ -1,25 +1,122 @@
 jQuery(document).ready(function ($) {
   /* --------------------
+     TOUCH SUPPORT FOR MOBILE
+-------------------- */
+  //jQuery UI Touch Punch for mobile support
+  !(function (a) {
+    function f(a, b) {
+      if (!(a.originalEvent.touches.length > 1)) {
+        a.preventDefault();
+        var c = a.originalEvent.changedTouches[0],
+          d = document.createEvent("MouseEvents");
+        d.initMouseEvent(
+          b,
+          !0,
+          !0,
+          window,
+          1,
+          c.screenX,
+          c.screenY,
+          c.clientX,
+          c.clientY,
+          !1,
+          !1,
+          !1,
+          !1,
+          0,
+          null
+        ),
+          a.target.dispatchEvent(d);
+      }
+    }
+    if (((a.support.touch = "ontouchend" in document), a.support.touch)) {
+      var e,
+        b = a.ui.mouse.prototype,
+        c = b._mouseInit,
+        d = b._mouseDestroy;
+      (b._touchStart = function (a) {
+        var b = this;
+        !e &&
+          b._mouseCapture(a.originalEvent.changedTouches[0]) &&
+          ((e = !0),
+          (b._touchMoved = !1),
+          f(a, "mouseover"),
+          f(a, "mousemove"),
+          f(a, "mousedown"));
+      }),
+        (b._touchMove = function (a) {
+          e && ((this._touchMoved = !0), f(a, "mousemove"));
+        }),
+        (b._touchEnd = function (a) {
+          e &&
+            (f(a, "mouseup"),
+            f(a, "mouseout"),
+            this._touchMoved || f(a, "click"),
+            (e = !1));
+        }),
+        (b._mouseInit = function () {
+          var b = this;
+          b.element.bind({
+            touchstart: a.proxy(b, "_touchStart"),
+            touchmove: a.proxy(b, "_touchMove"),
+            touchend: a.proxy(b, "_touchEnd"),
+          }),
+            c.call(b);
+        }),
+        (b._mouseDestroy = function () {
+          var b = this;
+          b.element.unbind({
+            touchstart: a.proxy(b, "_touchStart"),
+            touchmove: a.proxy(b, "_touchMove"),
+            touchend: a.proxy(b, "_touchEnd"),
+          }),
+            d.call(b);
+        });
+    }
+  })(jQuery);
+
+  // --------------------
+  // MAP SETUP (Leaflet)
+  // --------------------
+  let map = L.map("qiog-map").setView([19.3133, -81.2546], 12); // Cayman center
+  let markers = {}; // stopId => marker
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors",
+  }).addTo(map);
+
+  /* --------------------
      BASE CONFIG WITH CUSTOMIZATION SUPPORT
 -------------------- */
   let maxStops = window.qiogConfig?.maxStops || 3;
   let basePrice = window.qiogConfig?.basePriceFor3 || 900;
   let basePriceFor3Stops = window.qiogConfig?.basePriceFor3 || 900;
   let basePriceFor4Stops = window.qiogConfig?.basePriceFor4 || 1100;
+  let basePriceFor4StopsPackage = 1050; // ADD THIS LINE - Package 4-stop pricing
   let addonTotal = 0;
   let upgraded = false;
+  let isPackageWith4Stops = false; // ADD THIS LINE - Track if current selection is from a 4-stop package
+  let pickupMarker = null;
 
   /* --------------------
      RENDER FUNCTIONS
 -------------------- */
   function renderStops(stops) {
     $(".available-stops").empty();
+
     stops.forEach((stop) => {
       $(".available-stops").append(`
-            <div class="qiog-item stop-item" data-id="${stop.id}">
-                ${stop.name}
-            </div>
-        `);
+      <div class="qiog-item stop-item"
+           data-id="${stop.id}"
+           data-image="${stop.image}"
+           data-name="${stop.name}"
+           data-lat="${stop.lat}"
+           data-lng="${stop.lng}"
+           data-description="${stop.description || ""}">
+        <strong>${stop.name}</strong>
+        (${stop.duration} min)
+      </div>
+    `);
     });
   }
 
@@ -30,22 +127,31 @@ jQuery(document).ready(function ($) {
             <div class="qiog-item addon-item" 
                  data-id="${addon.id}" 
                  data-price="${addon.price}" 
-                 data-qty="1">
+                 >
 
                 <div class="addon-name">
                     ${addon.name} ($${addon.price})
                 </div>
 
-                <div class="addon-qty">
-                    Qty:
-                    <button class="qty-minus">−</button>
-                    <span class="qty-value">1</span>
-                    <button class="qty-plus">+</button>
-                </div>
-
             </div>
         `);
     });
+  }
+
+  // Helper: add qty controls to an addon element (used when item is moved to selected-addons)
+  function addQtyControls($item) {
+    if ($item.find(".addon-qty").length) return;
+    var $controls = $(
+      '<div class="addon-qty">Qty: <button class="qty-minus">−</button> <span class="qty-value">1</span> <button class="qty-plus">+</button></div>'
+    );
+    $item.append($controls);
+    $item.attr("data-qty", 1);
+  }
+
+  // Helper: remove qty controls from an addon element (used when item is moved back to available)
+  function removeQtyControls($item) {
+    $item.find(".addon-qty").remove();
+    $item.removeAttr("data-qty");
   }
 
   /* --------------------
@@ -59,6 +165,14 @@ jQuery(document).ready(function ($) {
     $.post(qiogCharter.ajax_url, { action: "qiog_get_addons" }, function (res) {
       if (res.success) renderAddons(res.data);
     });
+    // Fetch packages
+    $.post(
+      qiogCharter.ajax_url,
+      { action: "qiog_get_packages" },
+      function (res) {
+        if (res.success) renderPackages(res.data);
+      }
+    );
   }
 
   fetchStopsAndAddons();
@@ -78,6 +192,115 @@ jQuery(document).ready(function ($) {
     } else {
       $(".selected-addons .qiog-empty-state").show();
     }
+
+    // Toggle Clear buttons visibility depending on whether there are selected items
+    if ($(".selected-stops .stop-item").length > 0) {
+      $("#qiog-clear-stops").show();
+    } else {
+      $("#qiog-clear-stops").hide();
+    }
+
+    if ($(".selected-addons .addon-item").length > 0) {
+      $("#qiog-clear-addons").show();
+    } else {
+      $("#qiog-clear-addons").hide();
+    }
+  }
+
+  /* --------------------
+     PACKAGES: render and apply
+  -------------------- */
+  function renderPackages(packages) {
+    $(".available-packages").empty();
+    packages.forEach((pkg) => {
+      // Build stops list HTML
+      let stopsListHtml = "";
+      if (pkg.stop_names && pkg.stop_names.length > 0) {
+        stopsListHtml = '<ul class="pkg-stop-list">';
+        pkg.stop_names.forEach((stopName) => {
+          stopsListHtml += `<li>${stopName}</li>`;
+        });
+        stopsListHtml += "</ul>";
+      }
+
+      $(".available-packages").append(`
+          <div class="package-card" data-id="${
+            pkg.id
+          }" data-stops='${JSON.stringify(
+        pkg.stops
+      )}' data-addons='${JSON.stringify(pkg.addons)}'>
+              <div class="pkg-name">${pkg.name}</div>
+              ${stopsListHtml}
+              ${
+                pkg.description
+                  ? `<div class="pkg-meta">${pkg.description}</div>`
+                  : ""
+              }
+          </div>
+      `);
+    });
+
+    // click to apply package
+    $(document)
+      .off("click", ".package-card")
+      .on("click", ".package-card", function () {
+        // visually mark selected package
+        $(".package-card").removeClass("selected");
+        $(this).addClass("selected");
+        applyPackage($(this));
+      });
+  }
+
+  function applyPackage($card) {
+    // 🔥 RESET MAP FIRST
+    clearAllStopMarkers();
+    const packageName = $card.find(".pkg-name").text().trim();
+    let stops = JSON.parse($card.attr("data-stops") || "[]");
+    let addons = JSON.parse($card.attr("data-addons") || "[]");
+
+    // ADD THIS SECTION - Check if package has 4 stops
+    if (stops.length === 4) {
+      isPackageWith4Stops = true;
+      maxStops = 4; // Allow 4 stops
+    } else {
+      isPackageWith4Stops = false;
+    }
+
+    // Reset current selections: move selected stops/addons back to available
+    $(".selected-stops .stop-item").each(function () {
+      $(".available-stops").append($(this));
+    });
+    $(".selected-addons .addon-item").each(function () {
+      var $it = $(this);
+      removeQtyControls($it);
+      $(".available-addons").append($it);
+    });
+
+    // Move stops (respect maxStops)
+    let currentCount = $(".selected-stops .stop-item").length;
+    for (let i = 0; i < stops.length; i++) {
+      if (currentCount >= maxStops) break;
+      let stopId = stops[i];
+      // item may be in available-stops now
+      let $item = $(`.available-stops .stop-item[data-id="${stopId}"]`);
+      if ($item.length) {
+        $(".selected-stops").append($item);
+        currentCount++;
+        addStopMarker($item);
+      }
+    }
+
+    // Move addons
+    addons.forEach((addonId) => {
+      let $a = $(`.available-addons .addon-item[data-id="${addonId}"]`);
+      if ($a.length) {
+        $(".selected-addons").append($a);
+        addQtyControls($a);
+      }
+    });
+
+    calculateAddonTotal();
+    updateSummary();
   }
 
   /* --------------------
@@ -86,11 +309,21 @@ jQuery(document).ready(function ($) {
   function updateSummary() {
     let selectedStops = $(".selected-stops .stop-item").length;
 
-    // Dynamic pricing based on stops
+    // Dynamic pricing based on stops and source (package vs manual)
     if (selectedStops === 4) {
-      basePrice = basePriceFor4Stops;
+      if (isPackageWith4Stops) {
+        // Package with 4 stops: $900 + $150 = $1050
+        basePrice = basePriceFor4StopsPackage;
+      } else {
+        // Manual upgrade: $900 + $200 = $1100
+        basePrice = basePriceFor4Stops;
+      }
     } else {
       basePrice = basePriceFor3Stops;
+      // Reset package flag if stops reduced below 4
+      if (selectedStops < 4) {
+        isPackageWith4Stops = false;
+      }
     }
 
     $("#qiog-stop-count").text(selectedStops);
@@ -125,37 +358,65 @@ jQuery(document).ready(function ($) {
   }
 
   /* --------------------
-   DRAG & DROP - STOPS
+   DRAG & DROP - STOPS (WITH MOBILE SUPPORT)
 -------------------- */
-  $(".available-stops, .selected-stops")
-    .sortable({
-      connectWith: ".qiog-stops",
-      placeholder: "qiog-placeholder",
-      receive: function (event, ui) {
-        if ($(this).hasClass("selected-stops")) {
-          let selectedCount = $(".selected-stops .stop-item").length;
+  $(".available-stops, .selected-stops").sortable({
+    connectWith: ".qiog-stops",
+    placeholder: "qiog-placeholder",
+    tolerance: "pointer",
+    cursor: "move",
+    scroll: true,
+    scrollSensitivity: 100,
+    scrollSpeed: 20,
+    delay: 150,
+    distance: 10,
 
-          if (selectedCount > maxStops) {
-            alert("You can only select " + maxStops + " stops.");
-            $(ui.sender).sortable("cancel");
-            return;
-          }
+    receive: function (event, ui) {
+      if ($(this).hasClass("selected-stops")) {
+        let selectedCount = $(".selected-stops .stop-item").length;
+
+        if (selectedCount > maxStops) {
+          alert("You can only select " + maxStops + " stops.");
+          $(ui.sender).sortable("cancel");
+          return;
         }
 
-        updateSummary();
-      },
-      remove: function () {
-        updateSummary();
-      },
-    })
-    .disableSelection();
+        // ✅ ADD MARKER when manually added
+        addStopMarker(ui.item);
+      }
+
+      // Unselect package on manual change
+      $(".package-card").removeClass("selected");
+      isPackageWith4Stops = false;
+      updateSummary();
+    },
+
+    remove: function (event, ui) {
+      // ✅ REMOVE MARKER when stop is removed
+      removeStopMarker(ui.item);
+
+      $(".package-card").removeClass("selected");
+      isPackageWith4Stops = false;
+      updateSummary();
+    },
+
+    start: function (event, ui) {
+      ui.item.addClass("dragging");
+    },
+
+    stop: function (event, ui) {
+      ui.item.removeClass("dragging");
+    },
+  });
 
   /* --------------------
    UPGRADE STOPS
 -------------------- */
   $("#qiog-upgrade-btn").on("click", function () {
     let confirmUpgrade = confirm(
-      "Upgrade to 4 stops? Base price will increase to $" + basePriceFor4Stops + " when you add the 4th stop."
+      "Upgrade to 4 stops? Base price will increase to $" +
+        basePriceFor4Stops +
+        " when you add the 4th stop."
     );
 
     if (!confirmUpgrade) return;
@@ -167,25 +428,45 @@ jQuery(document).ready(function ($) {
   });
 
   /* --------------------
-   DRAG & DROP - ADDONS
+   DRAG & DROP - ADDONS (WITH MOBILE SUPPORT)
 -------------------- */
-  $(".available-addons, .selected-addons")
-    .sortable({
-      connectWith: ".qiog-addons",
-      placeholder: "qiog-placeholder",
-      receive: function () {
-        calculateAddonTotal();
-      },
-      remove: function () {
-        calculateAddonTotal();
-      },
-    })
-    .disableSelection();
+  $(".available-addons, .selected-addons").sortable({
+    connectWith: ".qiog-addons",
+    placeholder: "qiog-placeholder",
+    tolerance: "pointer",
+    cursor: "move",
+    scroll: true,
+    scrollSensitivity: 100,
+    scrollSpeed: 20,
+    delay: 150,
+    distance: 10,
+    receive: function (event, ui) {
+      var $item = $(ui.item);
+      if ($(this).hasClass("selected-addons")) {
+        // moved into selected list -> ensure qty controls
+        addQtyControls($item);
+      } else if ($(this).hasClass("available-addons")) {
+        // moved back to available -> remove qty controls
+        removeQtyControls($item);
+      }
+      calculateAddonTotal();
+    },
+    remove: function () {
+      calculateAddonTotal();
+    },
+    start: function (event, ui) {
+      ui.item.addClass("dragging");
+    },
+    stop: function (event, ui) {
+      ui.item.removeClass("dragging");
+    },
+  });
 
   /* --------------------
    ADDON QUANTITY LOGIC
 -------------------- */
-  $(document).on("click", ".qty-plus", function () {
+  $(document).on("click", ".qty-plus", function (e) {
+    e.stopPropagation(); // Prevent drag on button click
     let addon = $(this).closest(".addon-item");
     let qty = parseInt(addon.attr("data-qty"));
 
@@ -196,7 +477,8 @@ jQuery(document).ready(function ($) {
     calculateAddonTotal();
   });
 
-  $(document).on("click", ".qty-minus", function () {
+  $(document).on("click", ".qty-minus", function (e) {
+    e.stopPropagation(); // Prevent drag on button click
     let addon = $(this).closest(".addon-item");
     let qty = parseInt(addon.attr("data-qty"));
 
@@ -207,6 +489,106 @@ jQuery(document).ready(function ($) {
     addon.find(".qty-value").text(qty);
 
     calculateAddonTotal();
+  });
+
+  /* --------------------
+   MAP MARKER LOGIC
+-------------------- */
+
+  function addStopMarker($stopEl) {
+    const id = $stopEl.data("id");
+    if (markers[id]) return;
+
+    const name = $stopEl.data("name");
+    const imageUrl = $stopEl.data("image") || "https://via.placeholder.com/150"; // fallback
+    const lat = parseFloat($stopEl.data("lat"));
+    const lng = parseFloat($stopEl.data("lng"));
+    const description = $stopEl.data("description");
+
+    if (!lat || !lng) return;
+
+    const popupContent = `
+        <div style="width: 100px; font-family: Arial, sans-serif; text-align: center;">
+            <div style="height: 50px; overflow: hidden; margin-bottom: 8px;">
+                <img src="${imageUrl}" alt="${name}" style="width: 100%; object-fit: cover;">
+            </div>
+            <strong style="display: block; margin-bottom: 4px; font-size: 15px;">${name}</strong>
+            <p style="margin: 0; font-size: 12px; color: #555;">${
+              description ? description : ""
+            }</p>
+        </div>
+    `;
+
+    const marker = L.marker([lat, lng]).addTo(map);
+    marker.bindPopup(popupContent, {
+      autoClose: false,
+      closeOnClick: false,
+      closeButton: false,
+    });
+    // marker.openPopup();
+    markers[id] = marker;
+    centerMapToMarkers();
+  }
+
+  function clearAllStopMarkers() {
+    Object.keys(markers).forEach((id) => {
+      map.removeLayer(markers[id]);
+      delete markers[id];
+    });
+  }
+
+  function removeStopMarker($stopEl) {
+    const id = $stopEl.data("id");
+
+    if (markers[id]) {
+      map.removeLayer(markers[id]);
+      delete markers[id];
+    }
+  }
+
+  function centerMapToMarkers() {
+    const markerList = Object.values(markers);
+    if (!markerList.length) return;
+
+    const group = L.featureGroup(markerList);
+    map.fitBounds(group.getBounds(), {
+      padding: [40, 40],
+      animate: true,
+      maxZoom: 12,
+    });
+  }
+
+  // --------------------
+  // PICKUP LOCATION BUTTON
+  // --------------------
+  $("#qiog-pickup-btn").on("click", function () {
+    const lat = parseFloat(qiogCharter.pickup_lat);
+    const lng = parseFloat(qiogCharter.pickup_lng);
+    const label = qiogCharter.pickup_label || "Pickup Location";
+
+    if (!lat || !lng) {
+      alert("Pickup location not set.");
+      return;
+    }
+
+    // Remove old pickup marker if exists
+    if (pickupMarker) {
+      map.removeLayer(pickupMarker);
+    }
+
+    pickupMarker = L.marker([lat, lng], {
+      draggable: false,
+    }).addTo(map);
+
+    pickupMarker
+      .bindPopup(`<strong>${label}</strong>`, {
+        autoClose: false,
+        closeOnClick: false,
+      })
+      .openPopup();
+
+    // Center map on pickup
+    map.setView([lat, lng], 13);
   });
 
   /* --------------------
@@ -227,7 +609,15 @@ jQuery(document).ready(function ($) {
       });
     });
 
+    // Check if a package is selected
+    const selectedPackage = $(".package-card.selected");
+    const packageName =
+      selectedPackage.length > 0
+        ? selectedPackage.find(".pkg-name").text().trim()
+        : null;
+
     let bookingData = {
+      package_name: packageName,
       stops: stops,
       addons: addons,
       stops_count: $(".selected-stops .stop-item").length,
@@ -242,6 +632,34 @@ jQuery(document).ready(function ($) {
 
   // Initialize empty states on load
   updateEmptyStates();
+
+  // Clear buttons
+  $(document).on("click", "#qiog-clear-stops", function (e) {
+    e.preventDefault();
+    // 🔥 Clear map completely
+    clearAllStopMarkers();
+
+    // Move all selected stops back to available
+    $(".selected-stops .stop-item").each(function () {
+      $(".available-stops").append($(this));
+    });
+
+    // Unselect any selected package
+    $(".package-card").removeClass("selected");
+    isPackageWith4Stops = false;
+    updateSummary();
+  });
+
+  $(document).on("click", "#qiog-clear-addons", function (e) {
+    e.preventDefault();
+    // Move all selected addons back to available and remove qty controls
+    $(".selected-addons .addon-item").each(function () {
+      var $it = $(this);
+      removeQtyControls($it);
+      $(".available-addons").append($it);
+    });
+    calculateAddonTotal();
+  });
 
   /* --------------------
       LOAD BOOKING ON CHECKOUT PAGE

@@ -1,70 +1,24 @@
-/* Main container */
 #qiog-charter-builder {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 #qiog-charter-builder h2 {
   text-align: center;
   font-size: 28px;
+  margin-bottom: 30px;
   color: #333;
 }
 
-/* Wrapper for content positioning */
-.qiog-builder-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 100%;
-}
-
-/* Main layout grid */
+/* Two Column Layout
 .qiog-builder-layout {
   display: grid;
-  grid-template-columns: 70% 1fr;
-  gap: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
-  /* padding: 20px; */
-  position: relative;
-}
-
-/* Left column - main content */
-.qiog-content-column {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding-right: 30px;
-  padding-bottom: 30px;
-}
-
-/* Right column - sticky summary with full-width background */
-.qiog-summary-column {
-  position: relative;
-  background-color: #fafafa;
-  border-left: 1px solid #e8e8e8;
-  margin-left: -20px; /* Extend beyond grid */
-}
-
-/* Sticky wrapper */
-.qiog-summary-sticky-wrapper {
-  position: sticky;
-  top: 50px;
-  width: calc(30vw + 20px); /* 30% of viewport + padding */
-}
-
-/* Full-width background extension */
-.qiog-summary-column::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: -100vw;
-  z-index: -1;
-}
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+} */
 
 .qiog-column {
   display: flex;
@@ -228,13 +182,6 @@
 }
 
 .qiog-empty-state {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  opacity: 0.6;
   text-align: center;
   color: #999;
   padding: 30px 10px;
@@ -290,44 +237,18 @@
   background: red;
 }
 
-/* Enhanced Sticky Summary - Image Style */
+/* Pricing Summary */
 .qiog-pricing-summary {
-  border: none;
-  position: relative;
-  overflow: visible;
-  padding: 0;
-}
-
-.qiog-pricing-summary::before {
-  display: none;
+  background: #f8f9fa;
+  border: 2px solid #4caf50;
 }
 
 .qiog-summary-row {
   display: flex;
   justify-content: space-between;
-  padding: 10px 24px;
-  font-size: 14px;
-  color: #666;
-  border-bottom: 1px solid #f5f5f5;
-}
-
-.qiog-summary-row:last-of-type {
-  border-bottom: 1px solid #e8e8e8;
-}
-
-.qiog-summary-row span:first-child {
-  color: #666;
-  font-weight: 400;
-}
-
-.qiog-summary-row span:last-child {
+  padding: 8px 0;
+  font-size: 15px;
   color: #333;
-  font-weight: 600;
-}
-
-/* Remove emoji styling, use text labels */
-.qiog-summary-row span:first-child {
-  font-size: 14px;
 }
 
 .qiog-summary-row hr {
@@ -338,46 +259,28 @@
 
 .qiog-total-row {
   font-size: 18px;
-  padding: 20px 24px;
-  margin: 0;
-  border-top: 1px solid #e8e8e8 !important;
-  border-bottom: none !important;
-  background: white;
+  padding-top: 10px;
+  color: #4caf50;
 }
 
-.qiog-total-row strong {
-  color: #333;
-}
-
-#qiog-grand-total {
-  background: none;
-  -webkit-background-clip: unset;
-  -webkit-text-fill-color: unset;
-  background-clip: unset;
-  color: #333;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-/* Checkout button - Image style */
+/* Checkout Button */
 .qiog-checkout-btn {
-  width: calc(100% - 48px);
-  background: #333;
+  width: 100%;
+  background: #4caf50;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 14px 20px;
-  font-size: 15px;
+  border-radius: 8px;
+  padding: 15px 20px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin: 20px 24px 24px 24px;
-  text-align: center;
+  margin-top: 10px;
 }
 
 .qiog-checkout-btn:hover {
-  background: #000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: #45a049;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 /* Responsive Design */
@@ -432,7 +335,11 @@
 /* Card Headers */
 .qiog-summary-header,
 .qiog-form-header {
-  background: var(--primary-color, #4caf50);
+  background: linear-gradient(
+    135deg,
+    var(--primary-color, #4caf50) 0%,
+    var(--secondary-color, #2196f3) 100%
+  );
   color: white;
   padding: 24px 30px;
   display: flex;
@@ -577,7 +484,7 @@
 
 /* Pricing Breakdown */
 .qiog-pricing-breakdown {
-  /* margin-top: 25px; */
+  margin-top: 25px;
   padding: 20px;
   background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
   border-radius: 8px;
@@ -652,24 +559,27 @@ form#qiog-customer-form {
 
 /* Submit Button */
 .qiog-submit-btn {
-  width: calc(100% - 48px);
-  background: #333;
+  width: 100%;
+  padding: 15px 20px;
+  background: linear-gradient(
+    135deg,
+    var(--primary-color, #4caf50) 0%,
+    var(--secondary-color, #2196f3) 100%
+  );
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 14px 20px;
-  font-size: 15px;
+  border-radius: 8px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin: 20px 24px 24px 24px;
-  text-align: center;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  position: relative;
+  overflow: hidden;
 }
 
 .qiog-submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  background: #333;
-  color: white;
   box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
 }
 
@@ -797,50 +707,8 @@ form#qiog-customer-form {
   }
 }
 
-/* Tablet adjustments */
-@media (max-width: 1200px) and (min-width: 969px) {
-  .qiog-builder-layout {
-    grid-template-columns: 65% 1fr;
-  }
-
-  .qiog-summary-sticky-wrapper {
-    width: calc(35vw + 20px);
-  }
-}
-
 /* Responsive Design */
 @media (max-width: 968px) {
-  .qiog-builder-layout {
-    grid-template-columns: 1fr !important;
-    /* padding: 15px; */
-  }
-
-  .qiog-content-column {
-    padding-right: 0;
-    order: 1;
-  }
-
-  .qiog-summary-column {
-    margin-left: 0;
-    order: 2;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    margin-top: 20px;
-  }
-
-  .qiog-summary-column::before {
-    display: none;
-  }
-
-  .qiog-summary-sticky-wrapper {
-    position: static;
-    width: 100%;
-  }
-
-  .qiog-pricing-summary {
-    max-width: 100%;
-    margin: 0;
-  }
   .qiog-checkout-grid {
     grid-template-columns: 1fr;
   }
@@ -987,35 +855,67 @@ body.dragging {
   }
 }
 
+/* Layout: two rows, each with two columns (available | selected) */
+.qiog-builder-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .qiog-row {
   display: grid;
   gap: 20px;
 }
 
-.qiog-row:nth-child(1), /* Row 1: Main Heading - single column */
-.qiog-row:nth-child(2), /* Row 2: Stops Heading */
-.qiog-row:nth-child(4), /* Row 4: OR */
-.qiog-row:nth-child(5), /* Row 5: Packages Heading */
-.qiog-row:nth-child(6), /* Row 6: Packages */
-.qiog-row:nth-child(7), /* Row 7: Map */
-.qiog-row:nth-child(8), /* Row 8: Add-ons heading */
-.qiog-row:nth-child(10) /* Row 9: Pricing Summary */ {
+/* Row 1: Stops Heading - single column */
+.qiog-row:nth-child(1) {
   grid-template-columns: 1fr;
 }
 
-.qiog-row:nth-child(3), /* Row 3: Stops - Two column */
-.qiog-row:nth-child(9) /* Row 8: Add-ons - two columns */ {
+/* Row 2: Stops - Two column */
+.qiog-row:nth-child(2) {
   grid-template-columns: 1fr 1fr;
+}
+
+/* Row 3: OR */
+.qiog-row:nth-child(3) {
+  grid-template-columns: 1fr;
+}
+
+/* Row 4: Packages Heading - single column */
+.qiog-row:nth-child(4) {
+  grid-template-columns: 1fr;
+}
+
+/* Row 5: Packages - single column */
+.qiog-row:nth-child(5) {
+  grid-template-columns: 1fr;
+}
+
+/* Row 6: Map */
+.qiog-row:nth-child(6) {
+  grid-template-columns: 1fr;
+}
+
+/* Row 7: Add-ons heading - single column */
+.qiog-row:nth-child(7) {
+  grid-template-columns: 1fr;
+}
+
+/* Row 8: Add-ons - two columns */
+.qiog-row:nth-child(8) {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Row 9: Pricing Summary - single column */
+.qiog-row:nth-child(9) {
+  grid-template-columns: 1fr;
 }
 
 .qiog-column {
   display: flex;
   flex-direction: column;
   gap: 15px;
-}
-
-.qiog-charter-heading {
-  margin-top: 20px;
 }
 
 /* Available lists should show items in a compact grid */
@@ -1028,7 +928,7 @@ body.dragging {
 
 @media (min-width: 900px) {
   .available-stops {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
   .available-addons {
     grid-template-columns: repeat(3, 1fr);
@@ -1151,19 +1051,19 @@ body.dragging {
 
 /* Section Dividers and Headings */
 .qiog-section-divider {
-  margin: 20px 0 20px 0;
+  margin: 30px 0 20px 0;
   text-align: center;
 }
 
 .qiog-main-heading {
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 600;
   color: white;
   text-transform: uppercase;
   letter-spacing: 1px;
   position: relative;
   display: inline-block;
-  padding: 5px 10px;
+  padding: 0 20px;
   background: var(--secondary-color, #2196f3);
 }
 
@@ -1216,7 +1116,6 @@ body.dragging {
 
 .divider-text {
   font-size: 16px;
-  font-style: italic;
   font-weight: 600;
   color: #718096;
   padding: 8px 20px;
@@ -1224,13 +1123,13 @@ body.dragging {
   border: 2px solid var(--secondary-color, #2196f3);
   border-radius: 20px;
   text-transform: uppercase;
-  /* letter-spacing: 2px; */
+  letter-spacing: 2px;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .qiog-main-heading {
-    font-size: 13px;
+    font-size: 18px;
   }
 
   .qiog-main-heading::before,
@@ -1246,5 +1145,12 @@ body.dragging {
 
 #qiog-map {
   width: 100%;
-  height: 300px; /* desktop default */
+  height: 400px; /* desktop default */
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  #qiog-map {
+    height: 300px !important;
+  }
 }

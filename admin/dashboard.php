@@ -21,6 +21,7 @@ function qiog_render_admin_dashboard()
                     <th>Customer</th>
                     <th>Email</th>
                     <th>Phone</th>
+                    <th>Package</th>
                     <th>Stops</th>
                     <th>Add-ons</th>
                     <th>Stops Count</th>
@@ -38,6 +39,7 @@ function qiog_render_admin_dashboard()
                             <td><?php echo esc_html($booking->full_name); ?></td>
                             <td><?php echo esc_html($booking->email); ?></td>
                             <td><?php echo esc_html($booking->phone); ?></td>
+                            <td><?php echo esc_html($booking->package_name); ?></td>
                             <td>
                                 <?php
                                 $stops = json_decode($booking->stops, true);

@@ -25,6 +25,46 @@ function qiog_render_checkout_page()
                 <?php echo esc_attr($secondary_color); ?>
             ;
         }
+
+        /* Package Badge */
+        .qiog-package-badge {
+            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f4 100%);
+            border: 2px solid var(--primary-color, #4CAF50);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+        }
+
+        .package-badge-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .package-badge-content .qiog-icon-sm {
+            color: var(--primary-color, #4CAF50);
+            flex-shrink: 0;
+        }
+
+        .package-badge-content>div {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .package-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .package-name {
+            font-size: 16px;
+            color: var(--primary-color, #4CAF50);
+            font-weight: 700;
+        }
     </style>
     <div class="qiog-checkout">
         <div class="qiog-checkout-container">
@@ -132,15 +172,32 @@ function qiog_render_checkout_page()
             }
 
             bookingData = JSON.parse(bookingData);
-
             // Build summary HTML
-            let html = '<div class="qiog-summary-section">';
+            let html = '';
+            // Show package name if selected
+            if (bookingData.package_name) {
+                html += '<div class="qiog-summary-section qiog-package-badge">';
+                html += '<div class="package-badge-content">';
+                html += '<svg class="qiog-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">';
+                html += '<path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 5h4v2h-4V5z"></path>';
+                html += '</svg>';
+                html += '<div>';
+                html += '<span class="package-label">Selected Package</span>';
+                html += '<span class="package-name">' + bookingData.package_name + '</span>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            }
             html += '<div class="qiog-section-title">';
             html += '<svg class="qiog-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">';
             html += '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path>';
             html += '<circle cx="12" cy="10" r="3"></circle>';
             html += '</svg>';
-            html += '<h3>Tour Stops (' + bookingData.stops_count + ')</h3>';
+            let stopsTitle = 'Tour Stops (' + bookingData.stops_count + ')';
+            if (bookingData.package_name) {
+                stopsTitle += ' - Package: ' + bookingData.package_name;
+            }
+            html += '<h3>' + stopsTitle + '</h3>';
             html += '</div>';
             html += '<ul class="qiog-stops-list">';
             bookingData.stops.forEach((stop, index) => {

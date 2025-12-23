@@ -3,14 +3,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-add_shortcode('qiog_build_charter', 'qiog_render_charter_builder');
+add_shortcode('qiog_build_charter-old', 'qiog_render_charter_builder_old');
 
-function qiog_render_charter_builder()
+function qiog_render_charter_builder_old()
 {
     // Get customization options
     $options = get_option('qiog_customization_options', array());
-    $primary_color = isset($options['primary_color']) ? $options['primary_color'] : '#4CAF50';
-    $secondary_color = isset($options['secondary_color']) ? $options['secondary_color'] : '#2196F3';
     $charter_heading = isset($options['charter_heading']) ? $options['charter_heading'] : 'Build Your Charter';
     $stops_label = isset($options['stops_label']) ? $options['stops_label'] : 'Available Stops';
     $addons_label = isset($options['addons_label']) ? $options['addons_label'] : 'Available Add-ons';
@@ -18,66 +16,124 @@ function qiog_render_charter_builder()
     $base_price_4 = isset($options['base_price_4_stops']) ? $options['base_price_4_stops'] : 1100;
     $max_stops = isset($options['max_stops']) ? $options['max_stops'] : 3;
 
+    $stops_section_heading = isset($options['stops_section_heading']) ? $options['stops_section_heading'] : 'Select Your Stops';
+    $packages_section_heading = isset($options['packages_section_heading']) ? $options['packages_section_heading'] : 'Choose from Preset Packages';
+    $addons_section_heading = isset($options['addons_section_heading']) ? $options['addons_section_heading'] : 'Choose Additional Add-ons';
+    $summary_section_heading = isset($options['summary_section_heading']) ? $options['summary_section_heading'] : 'Charter Summary';
+
     ob_start();
     ?>
-    <style>
-        #qiog-charter-builder {
-            --primary-color:
-                <?php echo esc_attr($primary_color); ?>
-            ;
-            --secondary-color:
-                <?php echo esc_attr($secondary_color); ?>
-            ;
-        }
-    </style>
+
 
     <div id="qiog-charter-builder" data-base-price-3="<?php echo esc_attr($base_price_3); ?>"
         data-base-price-4="<?php echo esc_attr($base_price_4); ?>" data-max-stops="<?php echo esc_attr($max_stops); ?>">
-
-        <h2><?php echo esc_html($charter_heading); ?></h2>
+        <!-- 
+         <h2><?php echo esc_html($charter_heading); ?></h2> 
+        -->
 
         <div class="qiog-builder-layout">
-            <!-- Left Column: Available Items -->
-            <div class="qiog-column qiog-available-column">
-                <!-- Available Stops -->
-                <div class="qiog-section">
-                    <h3><?php echo esc_html($stops_label); ?></h3>
-                    <div class="qiog-stops available-stops"></div>
+
+            <!-- Row 1: Stops Heading -->
+            <div class="qiog-section-divider">
+                <h3 class="qiog-main-heading"><?php echo esc_html($stops_section_heading); ?></h3>
+            </div>
+
+            <!-- Row 2: Stops (left: available, right: selected) -->
+            <div class="qiog-row">
+                <div class="qiog-column">
+                    <div class="qiog-section">
+                        <h3><?php echo esc_html($stops_label); ?></h3>
+                        <div class="qiog-stops available-stops"></div>
+                    </div>
                 </div>
 
-                <!-- Available Addons -->
-                <div class="qiog-section">
-                    <h3><?php echo esc_html($addons_label); ?></h3>
-                    <div class="qiog-addons available-addons"></div>
+                <div class="qiog-column">
+                    <div class="qiog-section">
+                        <div class="qiog-section-header">
+                            <h3>Your Tour</h3>
+                            <div id="qiog-upgrade-wrapper" style="display:none;">
+                                <button id="qiog-upgrade-btn" class="upgrade-btn">+ Add Stop</button>
+                            </div>
+                        </div>
+                        <div class="qiog-stops selected-stops qiog-drop-zone">
+                            <div class="qiog-empty-state">Drag stops here</div>
+                        </div>
+                        <button id="qiog-clear-stops" class="clear-selection-btn" style="margin-top:10px;">Clear Selected
+                            Stops</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Right Column: Selected Items & Summary -->
-            <div class="qiog-column qiog-selected-column">
-                <!-- Selected Stops -->
-                <div class="qiog-section">
-                    <div class="qiog-section-header">
-                        <h3>Your Tour</h3>
-                        <div id="qiog-upgrade-wrapper" style="display:none;">
-                            <button id="qiog-upgrade-btn" class="upgrade-btn">
-                                + Add Stop
-                            </button>
+            <!-- Row 3: OR Divider -->
+            <div class="qiog-section-divider-or">
+                <span class="divider-line"></span>
+                <span class="divider-text">OR</span>
+                <span class="divider-line"></span>
+            </div>
+
+            <!-- Row 4: Packages Heading -->
+            <div class="qiog-section-divider">
+                <h3 class="qiog-main-heading"><?php echo esc_html($packages_section_heading); ?></h3>
+            </div>
+
+            <!-- Row 5: Packages -->
+            <div class="qiog-row">
+                <div class="qiog-column">
+                    <!-- Packages: preset tours users can select -->
+                    <div class="qiog-section">
+                        <h3>Packages</h3>
+                        <div class="qiog-packages available-packages"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 6: Map -->
+            <div class="qiog-row">
+                <div class="qiog-column">
+                    <!-- Packages: preset tours users can select -->
+                    <div class="qiog-section">
+                        <div id="qiog-map"></div>
+                        <!-- Pickup Location Button -->
+                        <!-- <button type="button" id="qiog-pickup-btn" class="qiog-btn qiog-btn-primary"
+                            style="margin-bottom: 10px;">
+                            📍 Pickup Location
+                        </button> -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 7: Add-ons Heading -->
+            <div class="qiog-section-divider">
+                <h3 class="qiog-main-heading"><?php echo esc_html($addons_section_heading); ?></h3>
+            </div>
+
+            <!-- Row 8: Add-ons (left: available, right: selected + summary) -->
+            <div class="qiog-row">
+                <div class="qiog-column">
+                    <div class="qiog-section">
+                        <h3><?php echo esc_html($addons_label); ?></h3>
+                        <div class="qiog-addons available-addons"></div>
+                    </div>
+                </div>
+
+                <div class="qiog-column">
+                    <div class="qiog-section">
+                        <div class="qiog-section-header">
+                            <h3>Selected Add-ons</h3>
                         </div>
+                        <div class="qiog-addons selected-addons qiog-drop-zone">
+                            <div class="qiog-empty-state">Drag add-ons here</div>
+                        </div>
+                        <button id="qiog-clear-addons" class="clear-selection-btn" style="margin-top:10px;">Clear
+                            Selected Add-ons</button>
                     </div>
-                    <div class="qiog-stops selected-stops qiog-drop-zone">
-                        <div class="qiog-empty-state">Drag stops here</div>
-                    </div>
-                </div>
 
-                <!-- Selected Addons -->
-                <div class="qiog-section">
-                    <h3>Selected Add-ons</h3>
-                    <div class="qiog-addons selected-addons qiog-drop-zone">
-                        <div class="qiog-empty-state">Drag add-ons here</div>
-                    </div>
-                </div>
 
-                <!-- Pricing Summary -->
+                </div>
+            </div>
+
+            <!-- Row 9: Pricing Summary -->
+            <div class="qiog-row">
                 <div class="qiog-section qiog-pricing-summary">
                     <h3>Charter Summary</h3>
                     <div class="qiog-summary-row">
@@ -97,11 +153,9 @@ function qiog_render_charter_builder()
                         <strong>Total:</strong>
                         <strong>$<span id="qiog-grand-total"><?php echo esc_html($base_price_3); ?></span></strong>
                     </div>
+                    <button id="qiog-checkout-btn" class="qiog-checkout-btn">Continue to Checkout</button>
                 </div>
 
-                <button id="qiog-checkout-btn" class="qiog-checkout-btn">
-                    Continue to Checkout
-                </button>
             </div>
         </div>
 
