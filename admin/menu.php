@@ -27,6 +27,16 @@ function qiog_charter_admin_menu()
         'qiog_render_admin_dashboard'
     );
 
+    // Submenu: Packages
+    add_submenu_page(
+        'qiog_charter',
+        'Packages',
+        'Packages',
+        'manage_options',
+        'qiog_charter_packages',
+        'qiog_charter_packages_page'
+    );
+
     // Submenu: Stops
     add_submenu_page(
         'qiog_charter',
@@ -47,24 +57,25 @@ function qiog_charter_admin_menu()
         'qiog_charter_addons_page'
     );
 
-    // Submenu: Packages
-    add_submenu_page(
-        'qiog_charter',
-        'Packages',
-        'Packages',
-        'manage_options',
-        'qiog_charter_packages',
-        'qiog_charter_packages_page'
-    );
 
     // Submenu: Customization
     add_submenu_page(
         'qiog_charter',
-        'Charter Customization',
-        'Charter Customization',
+        'Customization',
+        'Customization',
         'manage_options',
         'qiog_charter_customization',
         'qiog_charter_customization_page',
+    );
+
+
+    add_submenu_page(
+        'qiog_charter',
+        'Emails',
+        'Emails',
+        'manage_options',
+        'qiog_charter_email_settings',
+        'qiog_charter_email_settings_page',
     );
 
     // Submenu: Import / Export
@@ -76,16 +87,6 @@ function qiog_charter_admin_menu()
         'qiog_charter_import_export',
         'qiog_charter_import_export_page'
     );
-
-    add_submenu_page(
-        'qiog_charter',
-        'Charter Emails',
-        'Charter Emails',
-        'manage_options',
-        'qiog_charter_email_settings',
-        'qiog_charter_email_settings_page',
-    );
-
 }
 
 

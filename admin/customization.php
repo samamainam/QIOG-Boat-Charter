@@ -4,6 +4,14 @@ if (!defined('ABSPATH'))
 
 // Register settings
 add_action('admin_init', 'qiog_register_customization_settings');
+add_action(
+    'update_option_qiog_customization_options',
+    'qiog_sync_checkout_page',
+    10,
+    2
+);
+
+
 
 function qiog_register_customization_settings()
 {
@@ -56,6 +64,13 @@ function qiog_sanitize_customization_options($input)
     $sanitized['enable_customer_email'] = isset($input['enable_customer_email']) ? 'yes' : 'no';
     $sanitized['email_subject'] = sanitize_text_field($input['email_subject']);
 
+
+    // Checkout slug
+    $sanitized['checkout_page_slug'] = isset($input['checkout_page_slug'])
+        ? sanitize_title($input['checkout_page_slug'])
+        : 'checkout';
+
+
     return $sanitized;
 }
 
@@ -90,6 +105,7 @@ function qiog_charter_customization_page()
         'packages_section_heading' => 'Choose from Preset Packages',
         'addons_section_heading' => 'Choose Additional Add-ons',
         'summary_section_heading' => 'Charter Summary',
+        'checkout_page_slug' => 'charter-checkout',
         'pickup_lat' => '',
         'pickup_lng' => '',
         'pickup_label' => 'Pickup Location',
@@ -248,6 +264,26 @@ function qiog_charter_customization_page()
                                     class="regular-text">
                             </td>
                         </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="checkout_page_slug">Checkout Page URL</label>
+                            </th>
+                            <td>
+                                <input type="text" id="checkout_page_slug"
+                                    name="qiog_customization_options[checkout_page_slug]"
+                                    value="<?php echo esc_attr($options['checkout_page_slug'] ?? 'checkout'); ?>"
+                                    class="regular-text" placeholder="checkout" />
+                                <p class="description">
+                                    Enter the URL slug for the checkout page.
+                                    <br>
+                                    Example: <code>checkout</code> → <code><?php echo home_url('/checkout'); ?></code>
+                                    <br>
+                                    This page will be created automatically with
+                                    <code>[qiog_charter_checkout]</code>.
+                                </p>
+                            </td>
+                        </tr>
+
                     </table>
                 </div>
 
@@ -402,6 +438,8 @@ function qiog_charter_customization_page()
                         </tr>
                     </table>
                 </div>
+
+
 
             </div>
 
